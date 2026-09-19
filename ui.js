@@ -73,6 +73,13 @@ window.NOVA_UI = (() => {
     if (last < src.length) out.push(document.createTextNode(src.slice(last)));
   }
 
+  /* Render inline markdown nodes into a parent element. */
+  function appendInline(parent, src) {
+    const out = [];
+    inlineMd(src, out);
+    for (const n of out) parent.appendChild(n);
+  }
+
   function makeCodeBlock(lang, code) {
     const wrap = document.createElement("div");
     wrap.className = "code";
@@ -101,17 +108,6 @@ window.NOVA_UI = (() => {
     return wrap;
   }
 
-  function renderBlocksInto(container, src) {
-    const fenceRe = /```(\w*)\n?([\s\S]*?)(?:```|$)/g;
-    let last = 0, m;
-    while ((m = fenceRe.exec(src)) !== null) {
-      if (m.index > last) renderTextBlockInto(container, src.slice(last, m.index));
-      container.appendChild(makeCodeBlock(m[1], m[2].replace(/\n$/, "")));
-      last = m.index + m[0].length;
-    }
-    if (last < src.length) renderTextBlockInto(container, src.slice(last));
-  }
-
   function renderTextBlockInto(container, text) {
     const lines = text.split("\n");
     let list = null, ordered = false;
@@ -134,19 +130,19 @@ window.NOVA_UI = (() => {
       } else if (ul) {
         if (!list || ordered) { flush(); list = document.createElement("ul"); }
         const li = document.createElement("li");
-        inlineMd(ul[1], li);
+        appendInline(li, ul[1]);
         list.appendChild(li);
       } else if (ol) {
         if (!list || !ordered) { flush(); list = document.createElement("ol"); ordered = true; }
         const li = document.createElement("li");
-        inlineMd(ol[2], li);
+        appendInline(li, ol[2]);
         list.appendChild(li);
       } else if (line.trim() === "") {
         flush();
       } else {
         flush();
         const p = document.createElement("p");
-        inlineMd(line, p);
+        appendInline(p, line);
         container.appendChild(p);
       }
     }
@@ -156,7 +152,7 @@ window.NOVA_UI = (() => {
   /* Simplified, correct heading renderer (used by renderBlocksInto). */
   function addHeading(container, level, src) {
     const el = document.createElement("h" + level);
-    inlineMd(src, el);
+    appendInline(el, src);
     container.appendChild(el);
   }
 
@@ -269,7 +265,6 @@ window.NOVA_UI = (() => {
     else el.classList.remove("msg__bubble--caret");
   }
 
-  let typingEl = null;
   function showTyping() {
     hideTyping();
     els.chatEmpty.classList.add("chat__empty--hidden");
@@ -418,7 +413,6 @@ window.NOVA_UI = (() => {
   function setBusy(busy) {
     els.btnSend.hidden = busy;
     els.btnStop.hidden = !busy;
-    els.composer.disabled = false;
   }
 
   return {
@@ -427,6 +421,6 @@ window.NOVA_UI = (() => {
     showTyping, hideTyping, setError, setStatus, setHoloState, setModelInfo,
     bootDone, renderConversations, openSide, closeSide,
     openSettings, closeSettings, showNodePop, hideNodePop,
-    autoGrow, setBusy, addHeading,
+    autoGrow, setBusy,
   };
 })();

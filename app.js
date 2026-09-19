@@ -86,18 +86,24 @@ window.NOVA_APP = (() => {
 
   function initScene() {
     const mount = els.scene;
-    scene = new NovaScene(mount, {
-      onStateChange: (state) => UI.setHoloState(state),
-      onCoreClick: () => scene && scene.pulse(),
-      onDataNodeClick: (i) => {
-        const label = NODE_LABELS[i % NODE_LABELS.length] || ("Node " + (i + 1));
-        const cx = window.innerWidth / 2;
-        const cy = window.innerHeight / 2 - 120;
-        UI.showNodePop(label, cx, cy);
-        if (nodePopTimer) clearTimeout(nodePopTimer);
-        nodePopTimer = setTimeout(UI.hideNodePop, NODE_POP_MS);
-      },
-    });
+    try {
+      scene = new NovaScene(mount, {
+        onStateChange: (state) => UI.setHoloState(state),
+        onCoreClick: () => scene && scene.pulse(),
+        onDataNodeClick: (i) => {
+          const label = NODE_LABELS[i % NODE_LABELS.length] || ("Node " + (i + 1));
+          const cx = window.innerWidth / 2;
+          const cy = window.innerHeight / 2 - 120;
+          UI.showNodePop(label, cx, cy);
+          if (nodePopTimer) clearTimeout(nodePopTimer);
+          nodePopTimer = setTimeout(UI.hideNodePop, NODE_POP_MS);
+        },
+      });
+    } catch (err) {
+      /* No WebGL / driver blocked: keep the chat fully usable. */
+      scene = null;
+      UI.setError("3D scene unavailable in this browser (" + (err && err.message ? err.message : "WebGL missing") + "). Chat still works.");
+    }
     UI.bootDone();
   }
 
@@ -435,6 +441,10 @@ window.NOVA_APP = (() => {
     UI.setModelInfo(CFG.MODEL, "NVIDIA NIM · CLOUD");
 
     /* Real connectivity probe: tiny direct request to the catalog. */
+    if (typeof fetch !== "function") {
+      UI.setStatus("off", "READY · RELAY");
+      return;
+    }
     fetch("https://integrate.api.nvidia.com/v1/models", {
       headers: { Authorization: "Bearer " + CFG.NVIDIA_API_KEY },
     })

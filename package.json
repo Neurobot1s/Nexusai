@@ -12,6 +12,7 @@
     "three": "^0.186.0"
   },
   "devDependencies": {
+    "jsdom": "25",
     "typescript": "~5.9.3"
   }
 }

@@ -78,7 +78,7 @@ window.NOVA_AI = (() => {
   }
 
   /* One POST attempt to one URL with one model. */
-  function attempt(url, model, history, timeoutMs) {
+  async function attempt(url, model, history, timeoutMs) {
     var guard = withTimeout(timeoutMs);
     var body = {
       model: model,
