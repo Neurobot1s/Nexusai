@@ -1,17 +1,222 @@
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />    <title>NOVA · 3D AI Interface</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#07090d" />
+  <meta name="description" content="NOVA — an immersive 3D AI assistant powered by NVIDIA NIM." />
+  <title>NOVA · 3D AI Interface</title>
+
+  <!-- Fonts: Inter (UI) + JetBrains Mono (labels/code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='6' fill='%2338d3ea'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%2338d3ea' stroke-opacity='.45' stroke-width='1.4'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
 </head>
-
-
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
+  <!-- ══════════════════ 3D SCENE ══════════════════ -->
+  <div id="scene" aria-hidden="true">
+    <!-- Boot veil — fades out once Three.js is running -->
+    <div id="boot" class="boot">
+      <div class="boot__ring" aria-hidden="true"></div>
+      <p class="boot__label mono-caps">INITIALIZING CORE</p>
+    </div>
+  </div>
 
+  <div id="app" class="app">
+
+    <!-- ══════════════════ TOP BAR ══════════════════ -->
+    <header class="topbar glass">
+      <button class="icon-btn" id="btn-menu" aria-label="Toggle panel" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+
+      <a class="brand" href="#" aria-label="NOVA home">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
+            <circle cx="16" cy="16" r="5.4" fill="currentColor"/>
+            <circle cx="16" cy="16" r="11" stroke="currentColor" stroke-opacity=".4" stroke-width="1.3"/>
+            <circle cx="16" cy="5" r="1.6" fill="currentColor" fill-opacity=".8"/>
+          </svg>
+        </span>
+        <span class="brand__name" id="brand-name">NOVA</span>
+        <span class="brand__sub mono-caps">3D AI INTERFACE</span>
+      </a>
+
+      <div class="topbar__right">
+        <div class="status glass" id="status-chip" title="NVIDIA NIM connection">
+          <span class="status__dot" id="status-dot"></span>
+          <span class="mono-caps status__label" id="status-label">CHECKING…</span>
+          <span class="mono-caps status__model">NIM</span>
+        </div>
+        <button class="icon-btn" id="btn-settings" aria-label="Settings" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.08A1.7 1.7 0 0 0 10 4.09V4a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.08A1.7 1.7 0 0 0 19.91 11H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.05Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ══════════════════ SIDE PANEL ══════════════════ -->
+    <div class="drawer-veil" id="drawer-veil" hidden></div>
+    <aside class="side glass" id="side" aria-label="Conversations and settings">
+      <div class="side__head">
+        <span class="mono-caps side__title">CONVERSATIONS</span>
+        <button class="icon-btn icon-btn--sm" id="btn-new-chat" aria-label="New chat" title="New chat">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+
+      <nav class="convos" id="convos" aria-label="Conversation history"></nav>
+
+      <div class="side__section">
+        <span class="mono-caps side__title">MODEL</span>
+        <div class="model-info">
+          <p class="model-info__name" id="model-name">—</p>
+          <p class="model-info__meta mono-caps" id="model-meta">NVIDIA CLOUD</p>
+        </div>
+      </div>
+
+      <div class="side__section">
+        <span class="mono-caps side__title">SETTINGS</span>
+        <div class="toggle-row" role="group" aria-label="Motion preferences">
+          <span class="toggle-row__label">Motion</span>
+          <button class="toggle" id="toggle-motion" role="switch" aria-checked="true" aria-label="Reduce motion">
+            <span class="toggle__thumb"></span>
+          </button>
+        </div>
+        <div class="toggle-row" role="group" aria-label="Typing sound">
+          <span class="toggle-row__label">Typing sound</span>
+          <button class="toggle" id="toggle-sound" role="switch" aria-checked="false" aria-label="Typing sound">
+            <span class="toggle__thumb"></span>
+          </button>
+        </div>
+        <div class="toggle-row" role="group" aria-label="Sound design">
+          <span class="toggle-row__label">Sound design</span>
+          <button class="toggle" id="toggle-sound2" role="switch" aria-checked="true" aria-label="Sound design">
+            <span class="toggle__thumb"></span>
+          </button>
+        </div>
+        <p class="side__hint">History stays in this browser (localStorage). Clearing site data wipes it.</p>
+      </div>
+    </aside>
+
+    <!-- ══════════════════ HOLO STATUS ══════════════════ -->
+    <div class="holo glass" id="holo">
+      <p class="mono-caps holo__label">AI STATUS</p>
+      <p class="holo__value holo__value--online"><span class="holo__dot"></span>ONLINE</p>
+      <span class="holo__rule" aria-hidden="true"></span>
+      <p class="mono-caps holo__label">STATE</p>
+      <p class="holo__value holo__state mono-caps" id="holo-state">IDLE</p>
+    </div>
+
+    <!-- ══════════════════ HUD HINT ══════════════════ -->
+    <p class="hud-hint mono-caps" id="hud-hint">DRAG TO ORBIT · SCROLL TO ZOOM · CLICK THE CORE</p>
+
+    <!-- ══════════════════ CHAT PANEL ══════════════════ -->
+    <section class="chat glass" aria-label="Chat with NOVA">
+      <div class="chat__scroll" id="chat-scroll" role="log" aria-live="polite">
+        <div class="chat__empty" id="chat-empty">
+          <div class="chat__empty-glyph" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="30" height="30" fill="none">
+              <circle cx="16" cy="16" r="5" fill="currentColor"/>
+              <circle cx="16" cy="16" r="10.5" stroke="currentColor" stroke-opacity=".35" stroke-width="1.2"/>
+            </svg>
+          </div>
+          <p class="chat__empty-title" id="empty-title">NOVA is online.</p>
+          <p class="chat__empty-sub">Ask anything — code, ideas, or the universe.</p>
+        </div>
+        <div class="chat__msgs" id="msgs"></div>
+      </div>
+
+      <div class="chat__error glass" id="chat-error" hidden>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" class="chat__error-ico"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        <span id="error-text"></span>
+      </div>
+
+      <div class="chat__composer">
+        <button class="composer__btn" id="btn-mic" aria-label="Voice input (UI demo)" title="Voice input">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18.5V21.5"/></svg>
+        </button>
+
+        <textarea
+          class="composer__input"
+          id="composer"
+          rows="1"
+          placeholder="Message NOVA…"
+          aria-label="Message NOVA"
+        ></textarea>
+
+        <button class="composer__btn" id="btn-attach" aria-label="Attach file (UI demo)" title="Attach file">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="m21.4 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
+
+        <button class="composer__send" id="btn-send" aria-label="Send message" disabled>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        </button>
+
+        <button class="composer__btn composer__btn--stop" id="btn-stop" aria-label="Stop generation" hidden>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ══════════════════ NODE POPUP ══════════════════ -->
+    <div class="node-pop glass" id="node-pop" hidden>
+      <p class="mono-caps node-pop__label">DATA NODE</p>
+      <p class="node-pop__value" id="node-pop-label">—</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SETTINGS DRAWER ══════════════════ -->
+  <div class="settings-veil" id="settings-veil" hidden></div>
+  <aside class="settings glass" id="settings" aria-label="Settings" hidden>
+    <div class="settings__head">
+      <span class="mono-caps settings__title">CONFIGURATION</span>
+      <button class="icon-btn icon-btn--sm" id="btn-settings-close" aria-label="Close settings">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="settings__body">
+      <label class="field">
+        <span class="mono-caps field__label">ENDPOINT</span>
+        <input class="field__input" id="set-endpoint" type="url" spellcheck="false" autocomplete="off" />
+        <span class="field__hint">NVIDIA NIM chat-completions URL. Change only if you self-host NIM.</span>
+      </label>
+
+      <label class="field">
+        <span class="mono-caps field__label">MODEL</span>
+        <input class="field__input" id="set-model" type="text" spellcheck="false" autocomplete="off" />
+        <span class="field__hint" id="set-model-hint">Must be served by your endpoint / key.</span>
+      </label>
+
+      <label class="field">
+        <span class="mono-caps field__label">RELAY URL (OPTIONAL)</span>
+        <input class="field__input" id="set-relay" type="url" spellcheck="false" autocomplete="off" placeholder="https://your-worker.workers.dev/?url=" />
+        <span class="field__hint">If the browser blocks direct NIM calls (CORS), point this at your own relay — see workers/nim-relay.js in the repo. Leave empty to try direct first.</span>
+      </label>
+
+      <button class="settings__test" id="btn-test">
+        <span class="mono-caps">RUN CONNECTION TEST</span>
+      </button>
+      <p class="settings__result mono-caps" id="test-result" hidden></p>
+    </div>
+
+    <div class="settings__foot">
+      <p class="settings__foot-note">NOVA · static build · Three.js + NVIDIA NIM</p>
+    </div>
+  </aside>
+
+  <!-- Load order matters: config → ai → ui (globals), then ES modules three-scene → app -->
+  <script src="config.js"></script>
+  <script src="ai.js"></script>
+  <script src="ui.js"></script>
+  <script type="module" src="three-scene.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
 </html>
